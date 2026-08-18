@@ -1,0 +1,111 @@
+{
+  "name": "TUT Student Coding Agent (Gemini)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tut-agent",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "node-001",
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-200, 0],
+      "webhookId": "tut-agent-webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are \"TUT StudyBot\" — a friendly, patient programming tutor helping students at Tshwane University of Technology (TUT) with their coding and computer science coursework.\n\nHow to behave:\n- Answer questions about any programming language (Python, Java, C, C++, C#, JavaScript, SQL, PHP, etc.) and CS fundamentals (data structures, algorithms, OOP, databases, web dev, networking).\n- Explain concepts clearly and simply, as if talking to a first/second-year student. Use short paragraphs and code examples in fenced code blocks.\n- When a student pastes broken code, find the bug, explain WHY it's wrong, and show the corrected version.\n- For assignment-style questions, guide the student toward understanding the solution rather than just dumping a finished answer — unless they explicitly ask for a direct, complete solution.\n- If a question is vague, ask ONE short clarifying question before answering.\n- Keep tone encouraging and never make the student feel bad for not knowing something.\n- If asked something completely unrelated to studying/programming/TUT student life, answer briefly and gently steer back to how you can help with their studies."
+        }
+      },
+      "id": "node-002",
+      "name": "TUT Coding Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [20, 0]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-1.5-flash",
+        "options": {}
+      },
+      "id": "node-003",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [0, 220],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID",
+          "name": "Google Gemini account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId }}",
+        "contextWindowLength": 15
+      },
+      "id": "node-004",
+      "name": "Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [160, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"reply\": $json.output } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "node-005",
+      "name": "Respond to Chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [280, 0]
+    }
+  ],
+  "connections": {
+    "Chat Webhook": {
+      "main": [
+        [{ "node": "TUT Coding Agent", "type": "main", "index": 0 }]
+      ]
+    },
+    "TUT Coding Agent": {
+      "main": [
+        [{ "node": "Respond to Chat", "type": "main", "index": 0 }]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [{ "node": "TUT Coding Agent", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [{ "node": "TUT Coding Agent", "type": "ai_memory", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
