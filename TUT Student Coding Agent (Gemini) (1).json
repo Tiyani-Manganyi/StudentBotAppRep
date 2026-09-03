@@ -1,0 +1,314 @@
+{
+  "name": "TUT Student Coding Agent (Gemini)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tuningagent",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "2fd0607d-8847-4e88-8faa-6987b7665219",
+      "name": "Chat Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        -48
+      ],
+      "webhookId": "tut-agent-webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are \"TUT StudyBot\" — a friendly, patient programming tutor helping students at Tshwane University of Technology (TUT) with their coding and computer science coursework.\n\nHow to behave:\n- Answer questions about any programming language (Python, Java, C, C++, C#, JavaScript, SQL, PHP, etc.) and CS fundamentals (data structures, algorithms, OOP, databases, web dev, networking).\n- Explain concepts clearly and simply, as if talking to a first/second-year student. Use short paragraphs and code examples in fenced code blocks.\n- When a student pastes broken code, find the bug, explain WHY it's wrong, and show the corrected version.\n- For assignment-style questions, guide the student toward understanding the solution rather than just dumping a finished answer — unless they explicitly ask for a direct, complete solution.\n- If a question is vague, ask ONE short clarifying question before answering.\n- Keep tone encouraging and never make the student feel bad for not knowing something.\n- If asked something completely unrelated to studying/programming/TUT student life, answer briefly and gently steer back to how you can help with their studies."
+        }
+      },
+      "id": "1f3062df-fbf9-496d-997f-2e8a133fb20c",
+      "name": "TUT Coding Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        464,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a0fe79aa-a400-41ba-828a-446e0ec18995",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        448,
+        416
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "Gfd8oihdYlLif52k",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.sessionId }}",
+        "contextWindowLength": 15
+      },
+      "id": "b8a97717-d6a3-4081-bc44-4cb67d5c787b",
+      "name": "Chat Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"reply\": $json.output } }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "be546d63-755f-437c-afed-23e0aacd00ac",
+      "name": "Respond to Chat",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        -48
+      ]
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "5cc699c1-7693-45ac-aa66-a0f0ab52d829",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        240
+      ],
+      "webhookId": "tut-agent-telegram-webhook",
+      "credentials": {
+        "telegramApi": {
+          "id": "EZgs5zpK1sPAa2PI",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are \"TUT StudyBot\" — a friendly, patient programming tutor helping students at Tshwane University of Technology (TUT) with their coding and computer science coursework.\n\nHow to behave:\n- Answer questions about any programming language (Python, Java, C, C++, C#, JavaScript, SQL, PHP, etc.) and CS fundamentals (data structures, algorithms, OOP, databases, web dev, networking).\n- Explain concepts clearly and simply, as if talking to a first/second-year student. Use short paragraphs and code examples in fenced code blocks.\n- When a student pastes broken code, find the bug, explain WHY it's wrong, and show the corrected version.\n- For assignment-style questions, guide the student toward understanding the solution rather than just dumping a finished answer — unless they explicitly ask for a direct, complete solution.\n- If a question is vague, ask ONE short clarifying question before answering.\n- Keep tone encouraging and never make the student feel bad for not knowing something.\n- If asked something completely unrelated to studying/programming/TUT student life, answer briefly and gently steer back to how you can help with their studies.\n- You are being used on Telegram here, so keep code blocks reasonably short and avoid overly wide formatting that breaks on mobile."
+        }
+      },
+      "id": "04a55696-56cd-48d5-a2ed-92181e5b2b65",
+      "name": "TUT Coding Agent (Telegram)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        464,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ 'telegram_' + $json.message.chat.id }}",
+        "contextWindowLength": 15
+      },
+      "id": "b1bed205-5347-43e8-b19c-43fa6e7e2829",
+      "name": "Chat Memory (Telegram)",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        608,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('TUT Coding Agent (Telegram)').item.json.output }}",
+        "additionalFields": {
+          "parse_mode": "=HTML"
+        }
+      },
+      "id": "ef7d94d3-2209-4567-91c6-6a80a781f6aa",
+      "name": "Telegram Send Message",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        240
+      ],
+      "webhookId": "d3a197a1-dd54-4b69-8abe-042d910b2ee1",
+      "credentials": {
+        "telegramApi": {
+          "id": "EZgs5zpK1sPAa2PI",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 298143337,
+          "message": {
+            "message_id": 1,
+            "from": {
+              "id": 8657706096,
+              "is_bot": false,
+              "first_name": "Tiyani",
+              "last_name": "Manganyi",
+              "username": "ryxyby2317",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 8657706096,
+              "first_name": "Tiyani",
+              "last_name": "Manganyi",
+              "username": "ryxyby2317",
+              "type": "private"
+            },
+            "date": 1788363004,
+            "text": "/start",
+            "entities": [
+              {
+                "offset": 0,
+                "length": 6,
+                "type": "bot_command"
+              }
+            ]
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Chat Webhook": {
+      "main": [
+        [
+          {
+            "node": "TUT Coding Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TUT Coding Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "TUT Coding Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "TUT Coding Agent (Telegram)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "TUT Coding Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "TUT Coding Agent (Telegram)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TUT Coding Agent (Telegram)": {
+      "main": [
+        [
+          {
+            "node": "Telegram Send Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory (Telegram)": {
+      "ai_memory": [
+        [
+          {
+            "node": "TUT Coding Agent (Telegram)",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "baa842a9-841a-47ec-a2ed-43a2ae77b7b5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca66d243d8b125a0126e592776aebc272c674f397ef8ef66b7395a6069534faf"
+  },
+  "nodeGroups": [],
+  "id": "NzBdlaZbq34XMAr2",
+  "tags": []
+}
